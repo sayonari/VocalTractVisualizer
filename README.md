@@ -73,7 +73,7 @@ Original SparkNG repository: https://github.com/HidekiKawahara/SparkNG
 
 ### 本ソフトウェアのライセンス
 
-Copyright 2024 [Your Name]
+Copyright 2025 Ryota Nishimura
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

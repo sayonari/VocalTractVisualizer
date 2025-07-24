@@ -2,6 +2,8 @@
   "name": "vocal-tract-web",
   "version": "1.0.0",
   "description": "Web-based real-time vocal tract visualizer and speech analyzer",
+  "author": "Ryota Nishimura",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
