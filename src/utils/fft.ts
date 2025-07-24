@@ -44,7 +44,7 @@ export class FFT {
     return n > 0 && (n & (n - 1)) === 0;
   }
 
-  private static nextPowerOfTwo(n: number): number {
+  static nextPowerOfTwo(n: number): number {
     return Math.pow(2, Math.ceil(Math.log2(n)));
   }
 

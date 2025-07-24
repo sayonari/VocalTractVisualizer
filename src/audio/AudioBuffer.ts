@@ -2,7 +2,7 @@ export class CircularBuffer {
   private buffer: Float32Array | null = null;
   private writeIndex: number = 0;
   private readIndex: number = 0;
-  private size: number;
+  private size: number = 0; // 初期化を追加
   private filled: boolean = false;
 
   constructor(size: number) {
