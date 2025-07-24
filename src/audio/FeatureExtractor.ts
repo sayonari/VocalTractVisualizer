@@ -76,7 +76,15 @@ export class FeatureExtractor {
     
     // LPC解析（8kHzにダウンサンプリング）
     const downsampled = this.downsample(frame, this.sampleRate, 8000);
-    const lpcResult = this.lpcAnalyzer.analyzeFrame(downsampled);
+    
+    // 無音時でも最小限のノイズを追加して声道形状を生成
+    const processedFrame = new Float32Array(downsampled.length);
+    for (let i = 0; i < downsampled.length; i++) {
+      // 元の信号に微小なホワイトノイズを追加（-60dB程度）
+      processedFrame[i] = downsampled[i] + (Math.random() - 0.5) * 0.001;
+    }
+    
+    const lpcResult = this.lpcAnalyzer.analyzeFrame(processedFrame);
     
     return {
       fundamentalFrequency: f0,

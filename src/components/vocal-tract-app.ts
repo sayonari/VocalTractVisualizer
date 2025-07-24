@@ -397,12 +397,10 @@ export class VocalTractApp extends LitElement {
               this.infoPanel.updateAnalysisInfo(analysisInfo);
             }
             
-            // 3D声道モデルの更新（有声音の場合のみ）
+            // 3D声道モデルの更新（すべての音声で更新）
             if (this.vocalTract3D && 
                 features.vocalTractAreas && 
-                features.vocalTractAreas.length > 0 &&
-                features.voiceQuality === 'voiced' &&
-                features.intensity > 0.02) {  // より高い閾値で有声音を判定
+                features.vocalTractAreas.length > 0) {
               // 最初の数回だけ詳細ログ
               if (this.analysisLogCount < 3) {
                 console.log('Updating 3D vocal tract with areas:', {

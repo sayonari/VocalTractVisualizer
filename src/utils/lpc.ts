@@ -138,7 +138,8 @@ export class LPC {
     
     // 反射係数から面積比を計算
     for (let i = 0; i < n; i++) {
-      const k = reflectionCoeffs[i];
+      // 反射係数を安全な範囲にクリップ（-0.99 to 0.99）
+      const k = Math.max(-0.99, Math.min(0.99, reflectionCoeffs[i]));
       // 反射係数kから面積比を計算: A[i+1]/A[i] = (1-k)/(1+k)
       areas[i + 1] = areas[i] * ((1 - k) / (1 + k));
     }
