@@ -21,6 +21,8 @@ export class VocalTract3DComponent extends LitElement {
     :host {
       display: block;
       position: relative;
+      width: 100%;
+      height: 100%;
     }
 
     .vocal-tract-container {
@@ -29,12 +31,12 @@ export class VocalTract3DComponent extends LitElement {
       box-shadow: var(--shadow-sm);
       padding: var(--spacing-md);
       width: 100%;
-      height: 400px;  /* 表示領域を適切なサイズに拡大 */
+      height: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-sizing: border-box;
     }
-
 
     .three-container {
       flex: 1;
@@ -42,7 +44,7 @@ export class VocalTract3DComponent extends LitElement {
       border-radius: var(--radius-sm);
       overflow: hidden;
       background: #f5f5f5;
-      min-height: 0;  /* flexで自動調整できるように */
+      min-height: 0;
       width: 100%;
       box-sizing: border-box;
     }

@@ -19,6 +19,7 @@ export class VocalTract3D {
   private config: VocalTract3DConfig;
   private container: HTMLElement;
   private animationId: number | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor(
     container: HTMLElement,
@@ -69,8 +70,11 @@ export class VocalTract3D {
     // アニメーション開始
     this.animate();
 
-    // リサイズハンドラ
-    window.addEventListener('resize', this.handleResize.bind(this));
+    // ResizeObserverでコンテナのリサイズを監視
+    this.resizeObserver = new ResizeObserver(() => {
+      this.handleResize();
+    });
+    this.resizeObserver.observe(this.container);
   }
 
   private setupLighting(): void {
@@ -457,7 +461,13 @@ export class VocalTract3D {
     if (this.animationId !== null) {
       cancelAnimationFrame(this.animationId);
     }
-    
+
+    // ResizeObserverの停止
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+
     // リソースの解放
     if (this.tractMesh) {
       this.scene.remove(this.tractMesh);
@@ -466,14 +476,13 @@ export class VocalTract3D {
         this.tractMesh.material.dispose();
       }
     }
-    
+
     this.renderer.dispose();
     this.controls.dispose();
-    
+
     // DOMからの削除
-    this.container.removeChild(this.renderer.domElement);
-    
-    // イベントリスナーの削除
-    window.removeEventListener('resize', this.handleResize.bind(this));
+    if (this.renderer.domElement.parentNode === this.container) {
+      this.container.removeChild(this.renderer.domElement);
+    }
   }
 }

@@ -5,23 +5,27 @@ import { Spectrogram, SpectrogramConfig } from '../visualization/Spectrogram';
 @customElement('spectrogram-display')
 export class SpectrogramDisplay extends LitElement {
   @property({ type: Number }) width = 800;
-  @property({ type: Number }) height = 400;
-  @property({ type: String }) colorMap: SpectrogramConfig['colorMap'] = 'hot';  // デフォルトをhotに
-  @property({ type: Number }) dynamicRange = 54;  // デフォルトを54dBに
+  @property({ type: Number }) height = 200;
+  @property({ type: String }) colorMap: SpectrogramConfig['colorMap'] = 'hot';
+  @property({ type: Number }) dynamicRange = 54;
   @property({ type: Number }) minFrequency = 0;
   @property({ type: Number }) maxFrequency = 8000;
-  
+
   @state() private isRunning = false;
-  
+
   @query('canvas') canvas!: HTMLCanvasElement;
-  
+  @query('.spectrogram-container') container!: HTMLDivElement;
+
   private spectrogram: Spectrogram | null = null;
   private animationId: number | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   static styles = css`
     :host {
       display: block;
       position: relative;
+      width: 100%;
+      height: 100%;
     }
 
     .spectrogram-container {
@@ -29,6 +33,17 @@ export class SpectrogramDisplay extends LitElement {
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-sm);
       padding: var(--spacing-md);
+      position: relative;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .canvas-wrapper {
+      flex: 1;
+      min-height: 0;
       position: relative;
     }
 
@@ -130,10 +145,10 @@ export class SpectrogramDisplay extends LitElement {
         <div class="controls">
           <div class="control-group">
             <span class="control-label">ダイナミックレンジ (${this.dynamicRange} dB)</span>
-            <input 
-              type="range" 
-              min="40" 
-              max="120" 
+            <input
+              type="range"
+              min="40"
+              max="120"
               .value=${String(this.dynamicRange)}
               @input=${this.handleDynamicRangeChange}
             />
@@ -141,10 +156,10 @@ export class SpectrogramDisplay extends LitElement {
 
           <div class="control-group">
             <span class="control-label">最大周波数 (${this.maxFrequency} Hz)</span>
-            <input 
-              type="range" 
-              min="2000" 
-              max="22000" 
+            <input
+              type="range"
+              min="2000"
+              max="22000"
               step="1000"
               .value=${String(this.maxFrequency)}
               @input=${this.handleMaxFrequencyChange}
@@ -152,18 +167,20 @@ export class SpectrogramDisplay extends LitElement {
           </div>
         </div>
 
-        <canvas
-          width=${this.width}
-          height=${this.height}
-          @mousemove=${this.handleMouseMove}
-          @mouseleave=${this.handleMouseLeave}
-        ></canvas>
-        
-        <div class="spectrogram-label">スペクトログラム</div>
-        
-        <div class="frequency-info" id="frequency-info">
-          <span id="frequency-value">0 Hz</span> | 
-          <span id="time-value">0 ms</span>
+        <div class="canvas-wrapper">
+          <canvas
+            width=${this.width}
+            height=${this.height}
+            @mousemove=${this.handleMouseMove}
+            @mouseleave=${this.handleMouseLeave}
+          ></canvas>
+
+          <div class="spectrogram-label">スペクトログラム</div>
+
+          <div class="frequency-info" id="frequency-info">
+            <span id="frequency-value">0 Hz</span> |
+            <span id="time-value">0 ms</span>
+          </div>
         </div>
       </div>
     `;
@@ -171,12 +188,30 @@ export class SpectrogramDisplay extends LitElement {
 
   firstUpdated() {
     this.setupSpectrogram();
+    this.setupResizeObserver();
   }
 
   updated(changedProperties: Map<string, any>) {
     if (changedProperties.has('width') || changedProperties.has('height')) {
       this.spectrogram?.resize(this.width, this.height);
     }
+  }
+
+  private setupResizeObserver() {
+    const canvasWrapper = this.shadowRoot?.querySelector('.canvas-wrapper');
+    if (!canvasWrapper) return;
+
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          this.width = Math.floor(width);
+          this.height = Math.floor(height);
+          this.spectrogram?.resize(this.width, this.height);
+        }
+      }
+    });
+    this.resizeObserver.observe(canvasWrapper);
   }
 
   private setupSpectrogram() {
@@ -264,6 +299,10 @@ export class SpectrogramDisplay extends LitElement {
     super.disconnectedCallback();
     if (this.animationId !== null) {
       cancelAnimationFrame(this.animationId);
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
     }
   }
 }

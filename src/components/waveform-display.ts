@@ -10,15 +10,18 @@ export class WaveformDisplay extends LitElement {
   @property({ type: Boolean }) showGrid = true;
 
   @query('canvas') canvas!: HTMLCanvasElement;
-  
+
   private context: CanvasRenderingContext2D | null = null;
   private animationId: number | null = null;
   private waveformData: Float32Array = new Float32Array(2048);
+  private resizeObserver: ResizeObserver | null = null;
 
   static styles = css`
     :host {
       display: block;
       position: relative;
+      width: 100%;
+      height: 100%;
     }
 
     .waveform-container {
@@ -28,6 +31,17 @@ export class WaveformDisplay extends LitElement {
       padding: var(--spacing-md);
       position: relative;
       overflow: hidden;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .canvas-wrapper {
+      flex: 1;
+      min-height: 0;
+      position: relative;
     }
 
     canvas {
@@ -62,25 +76,45 @@ export class WaveformDisplay extends LitElement {
   render() {
     return html`
       <div class="waveform-container">
-        <canvas 
-          width=${this.width} 
-          height=${this.height}
-          role="img"
-          aria-label="音声波形"
-        ></canvas>
-        <div class="waveform-label">波形</div>
+        <div class="canvas-wrapper">
+          <canvas
+            width=${this.width}
+            height=${this.height}
+            role="img"
+            aria-label="音声波形"
+          ></canvas>
+          <div class="waveform-label">波形</div>
+        </div>
       </div>
     `;
   }
 
   firstUpdated() {
     this.setupCanvas();
+    this.setupResizeObserver();
   }
 
   updated(changedProperties: Map<string, any>) {
     if (changedProperties.has('width') || changedProperties.has('height')) {
       this.setupCanvas();
     }
+  }
+
+  private setupResizeObserver() {
+    const canvasWrapper = this.shadowRoot?.querySelector('.canvas-wrapper');
+    if (!canvasWrapper) return;
+
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          this.width = Math.floor(width);
+          this.height = Math.floor(height);
+          this.setupCanvas();
+        }
+      }
+    });
+    this.resizeObserver.observe(canvasWrapper);
   }
 
   private setupCanvas() {
@@ -94,10 +128,6 @@ export class WaveformDisplay extends LitElement {
     this.canvas.width = this.width * dpr;
     this.canvas.height = this.height * dpr;
     this.context.scale(dpr, dpr);
-
-    // スタイルでキャンバスのサイズを設定
-    this.canvas.style.width = `${this.width}px`;
-    this.canvas.style.height = `${this.height}px`;
 
     this.drawBackground();
   }
@@ -240,6 +270,10 @@ export class WaveformDisplay extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this.stopAnimation();
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
   }
 
   // スクリーンショット機能

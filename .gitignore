@@ -38,3 +38,10 @@ coverage/
 *.tmp
 *.temp
 .cache/
+
+# macOS icon files
+Icon?
+Icon
+
+# npm cache
+.npm-cache/

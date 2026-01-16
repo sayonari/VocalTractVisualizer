@@ -156,19 +156,34 @@ export class VocalTractApp extends LitElement {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: var(--spacing-md);
-      margin-bottom: var(--spacing-lg);
-      height: 400px;  /* 固定高さで両方のコンポーネントを統一 */
+      flex: 3;
+      min-height: 0;
       overflow: hidden;
     }
-    
+
     spectrogram-display {
       display: block;
-      margin-top: var(--spacing-md);
+      flex: 1;
+      min-height: 120px;
+      max-height: 250px;
     }
 
     @media (max-width: 1024px) {
       .visualization-grid {
         grid-template-columns: 1fr;
+        flex: 2;
+      }
+
+      spectrogram-display {
+        flex: 1;
+        min-height: 100px;
+        max-height: 180px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .visualization-grid {
+        flex: 1.5;
       }
     }
   `;
@@ -217,10 +232,7 @@ export class VocalTractApp extends LitElement {
             <waveform-display></waveform-display>
             <vocal-tract-3d></vocal-tract-3d>
           </div>
-          <spectrogram-display
-            width="600"
-            height="200"
-          ></spectrogram-display>
+          <spectrogram-display></spectrogram-display>
         </div>
       </layout-grid>
     `;
