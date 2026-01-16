@@ -8,6 +8,7 @@ import './info-panel';
 import './layout-grid';
 import './spectrogram-display';
 import './vocal-tract-3d';
+import './resizable-splitter';
 import type { AudioRecorder } from './audio-recorder';
 import type { WaveformDisplay } from './waveform-display';
 import type { ControlPanel, ControlSettings } from './control-panel';
@@ -73,6 +74,7 @@ export class VocalTractApp extends LitElement {
       box-shadow: var(--shadow-sm);
       padding: var(--spacing-xs) var(--spacing-md);
       z-index: 10;
+      flex-shrink: 0;
     }
 
     .header-content {
@@ -90,7 +92,6 @@ export class VocalTractApp extends LitElement {
       color: var(--text-primary);
     }
 
-
     main {
       flex: 1;
       overflow: hidden;
@@ -100,7 +101,7 @@ export class VocalTractApp extends LitElement {
 
     .content-area {
       height: 100%;
-      padding: var(--spacing-md);
+      padding: var(--spacing-sm);
     }
 
     .error-banner {
@@ -111,80 +112,69 @@ export class VocalTractApp extends LitElement {
       font-size: 14px;
     }
 
-    .loading-message {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    /* Splitter layout */
+    resizable-splitter {
       height: 100%;
-      color: var(--text-secondary);
     }
 
-    .realtime-view {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-md);
-      height: 100%;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
-    waveform-display {
-      flex: 1;
-      height: 100%;  /* グリッドコンテナの高さに合わせる */
-    }
-
-    .sidebar-content {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-md);
+    .sidebar-panel {
       height: 100%;
       overflow-y: auto;
-    }
-
-    .main-content {
+      padding: var(--spacing-sm);
       display: flex;
       flex-direction: column;
       gap: var(--spacing-md);
+    }
+
+    .main-panel {
+      height: 100%;
+      padding: var(--spacing-sm);
+    }
+
+    .visualization-panel {
+      width: 100%;
       height: 100%;
     }
 
-    layout-grid {
+    .spectrogram-panel {
+      width: 100%;
       height: 100%;
     }
 
-    .visualization-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--spacing-md);
-      flex: 3;
-      min-height: 0;
-      overflow: hidden;
-    }
-
+    waveform-display,
+    vocal-tract-3d,
     spectrogram-display {
-      display: block;
-      flex: 1;
-      min-height: 120px;
-      max-height: 250px;
+      width: 100%;
+      height: 100%;
     }
 
-    @media (max-width: 1024px) {
-      .visualization-grid {
-        grid-template-columns: 1fr;
-        flex: 2;
-      }
-
-      spectrogram-display {
-        flex: 1;
-        min-height: 100px;
-        max-height: 180px;
-      }
+    control-panel,
+    info-panel {
+      flex-shrink: 0;
     }
 
-    @media (max-width: 768px) {
-      .visualization-grid {
-        flex: 1.5;
-      }
+    /* Reset button */
+    .reset-layout-btn {
+      position: fixed;
+      bottom: var(--spacing-md);
+      right: var(--spacing-md);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      background: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      z-index: 1000;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .reset-layout-btn:hover {
+      opacity: 1;
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
     }
   `;
 
@@ -220,22 +210,73 @@ export class VocalTractApp extends LitElement {
 
   private renderContent() {
     return html`
-      <layout-grid layout="sidebar-left">
-        <div slot="sidebar" class="sidebar-content">
+      <!-- Main horizontal splitter: Sidebar | Main content -->
+      <resizable-splitter
+        direction="horizontal"
+        storageKey="main-sidebar"
+        .defaultRatio=${0.22}
+        .minSize=${180}
+        @splitter-resize=${this.handleSplitterResize}
+      >
+        <!-- Sidebar -->
+        <div slot="first" class="sidebar-panel">
           <control-panel
             @settings-changed=${this.handleSettingsChanged}
           ></control-panel>
           <info-panel></info-panel>
         </div>
-        <div slot="main" class="main-content">
-          <div class="visualization-grid">
-            <waveform-display></waveform-display>
-            <vocal-tract-3d></vocal-tract-3d>
-          </div>
-          <spectrogram-display></spectrogram-display>
+
+        <!-- Main content area -->
+        <div slot="second" class="main-panel">
+          <!-- Vertical splitter: Visualization | Spectrogram -->
+          <resizable-splitter
+            direction="vertical"
+            storageKey="main-vertical"
+            .defaultRatio=${0.65}
+            .minSize=${100}
+            @splitter-resize=${this.handleSplitterResize}
+          >
+            <!-- Upper: Waveform and 3D model -->
+            <div slot="first" class="visualization-panel">
+              <!-- Horizontal splitter: Waveform | 3D Vocal Tract -->
+              <resizable-splitter
+                direction="horizontal"
+                storageKey="visualization"
+                .defaultRatio=${0.4}
+                .minSize=${150}
+                @splitter-resize=${this.handleSplitterResize}
+              >
+                <waveform-display slot="first"></waveform-display>
+                <vocal-tract-3d slot="second"></vocal-tract-3d>
+              </resizable-splitter>
+            </div>
+
+            <!-- Lower: Spectrogram -->
+            <div slot="second" class="spectrogram-panel">
+              <spectrogram-display></spectrogram-display>
+            </div>
+          </resizable-splitter>
         </div>
-      </layout-grid>
+      </resizable-splitter>
+
+      <button class="reset-layout-btn" @click=${this.resetLayout}>
+        レイアウトをリセット
+      </button>
     `;
+  }
+
+  private handleSplitterResize() {
+    // Trigger resize events for child components
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  private resetLayout() {
+    // Clear all saved splitter positions
+    localStorage.removeItem('splitter-main-sidebar');
+    localStorage.removeItem('splitter-main-vertical');
+    localStorage.removeItem('splitter-visualization');
+    // Reload the page to apply default layout
+    window.location.reload();
   }
 
   @action
